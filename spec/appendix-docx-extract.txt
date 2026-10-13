@@ -1,0 +1,220 @@
+[Normal] CUT DELUXE
+[Normal] Functional Product Specification
+[Normal] What the system needs to do to become a genuinely usable mobile-barber operating system
+[Normal] BOOKING  →  ROUTE FLOW  →  CALENDAR  →  MESSAGING  →  PAYMENTS  →  LIVE ROUTE  →  CRM
+[Normal] Prepared for Atul
+[Normal] October 2026
+[Heading 1] 1. Product outcome
+[Normal] Cut Deluxe should remove the admin work around mobile barbering. The system should accept booking requests, understand where clients are and when they are available, organise the barber’s day, communicate with clients automatically, collect payment, and guide the barber through the route in real time.
+[Normal] The finished experience should feel like one operating system, not a collection of disconnected tools. The barber should be able to spend most of the day cutting or driving without constantly rearranging the calendar, replying to routine messages, calculating travel time, chasing confirmations, or manually reconciling payments.
+[Heading 2] Definition of “functional”
+[List Bullet] A new customer can request a booking without speaking to the barber.
+[List Bullet] The system can place or reshuffle the request into a valid provisional schedule using real travel time.
+[List Bullet] The barber can review the day, finalise the route once, then execute it from the Route tab.
+[List Bullet] Customers receive the right confirmation, reminder, ETA and change messages automatically.
+[List Bullet] Payments/deposits are linked to the booking and visible to admin.
+[List Bullet] The barber’s live progress can update ETAs and the customer experience.
+[List Bullet] Regular clients are remembered and followed up automatically at the correct frequency.
+[List Bullet] Every important automated decision is visible in Route Flow Activity.
+[List Bullet] If automation cannot decide safely, the item becomes a clear admin action rather than disappearing.
+[Heading 1] 2. What already works in Base44
+=== TABLE START ===
+Area | Status | Current capability
+Public booking | Working | 5-step booking flow with location, services, availability, customer details and review.
+Availability | Working | Customer gives a real availability window rather than choosing an exact appointment time.
+Coverage | Working | Map-based coverage validation and service-area logic.
+Booking window | Working | Shared minimum notice and maximum booking horizon used by public booking, Route Flow and Calendar.
+Calendar | Working | Dark admin calendar with provisional/locked/confirmed states, manual drag and shared validation.
+Route Flow auto-place | Working | New requests can be placed in the background using real constraints.
+Route Flow reshuffle | Working | Provisional appointments can move; locked and confirmed appointments remain protected.
+Stage 2.1 fit | Working | If a new request does not fit directly, it is considered together with movable provisional appointments.
+Timing engine | Working | Service duration + configured buffer + travel; hidden 25-minute padding was removed.
+Barber start location | Working | First-leg travel is measured from the barber’s saved start location.
+Activity log | In progress / exposed | Route Flow events are being surfaced so automated actions can be audited.
+Security | Working | Protected admin routes, secure server-side public functions, role restrictions and audited overrides.
+Test data | Working | TEST customers/bookings can be isolated from real analytics and cleaned up safely.
+=== TABLE END ===
+[Heading 1] 3. The complete customer journey
+[Normal] 1. Customer requests — Customer enters address, services, availability window, contact details and notes. Backend validates booking window, service area and input data.
+[Normal] 2. Route Flow plans — The request is auto-placed if possible. If not, provisional bookings can be reshuffled to fit it. Impossible requests remain visible as Unscheduled.
+[Normal] 3. Admin reviews — Admin sees a draft/provisional day in Calendar. They can edit requests, manually place, decline, lock or confirm.
+[Normal] 4. Finalise Route — When the day looks right, admin presses Finalise Route. The system creates the final sequence, compresses avoidable dead time and generates all drive legs.
+[Normal] 5. Customer is confirmed — Customer receives appointment confirmation and the agreed arrival window/time. Payment/deposit status is attached to the booking.
+[Normal] 6. Day executes — Route tab becomes the barber’s operating screen: next stop, ETA, navigate, call/message, arrived, start service, complete.
+[Normal] 7. Live changes — If the barber runs early/late, the system recalculates ETA and sends appropriate updates. Cancellations/new requests mark the route as needing update.
+[Normal] 8. Payment closes the job — Deposit and final balance are captured/reconciled. Receipt is sent. Revenue is recorded against the booking.
+[Normal] 9. CRM follows up — Client visit history, frequency and preferences update. Regular-client reminders and rebooking messages run automatically.
+[Heading 1] 4. Core modules Atul needs to help make production-ready
+[Heading 2] A. Automated messaging & AI assistant
+[List Bullet] Support WhatsApp and/or SMS as the primary customer messaging channel; email can be secondary.
+[List Bullet] Automatically send: request received, booking confirmed, payment/deposit request, reminder, ETA/on-the-way, running late, reschedule/cancellation, completion/receipt and rebooking follow-up.
+[List Bullet] AI assistant should handle routine inbound conversations while the barber is driving/cutting.
+[List Bullet] Assistant should understand booking context: customer name, service, address, availability, existing booking, calendar status and payment state.
+[List Bullet] For new leads, collect the minimum required data: name, phone, email if needed, location, service and availability.
+[List Bullet] For existing clients, recognise the client and avoid repeatedly asking for known information.
+[List Bullet] When a customer asks for a change, create a structured request rather than silently altering protected appointments.
+[List Bullet] Escalate ambiguous, angry, sensitive or unusual conversations to the barber/admin.
+[List Bullet] Never promise a time that has not been validated by the scheduling engine.
+[List Bullet] Keep a message history on the client/booking and log whether the message was automated or manual.
+[Heading 2] B. Calendar & scheduling
+[List Bullet] Base44 Calendar remains the planning surface.
+[List Bullet] Booking requests become provisional placements inside customer availability.
+[List Bullet] Shared validator must govern public booking, automation and manual movement.
+[List Bullet] Provisional appointments can move; Locked and Confirmed appointments are protected.
+[List Bullet] No overlap, invalid travel, invalid working hours or availability violations.
+[List Bullet] Admin must be able to edit, manually place or decline unresolved requests.
+[List Bullet] Calendar should expose route status: Draft, Finalising, Finalised, Needs Update.
+[List Bullet] Optional external sync: Google Calendar can mirror confirmed appointments or provide external busy blocks, but Base44 should have a clear source-of-truth policy to avoid double booking.
+[Heading 2] C. Route Flow / optimisation engine
+[List Bullet] Stage 1: place a new request into the current day if a valid slot exists.
+[List Bullet] Stage 2: optimise provisional appointments using total drive + idle minutes.
+[List Bullet] Stage 2.1: if a new request does not fit, include it in a full provisional reshuffle rather than giving up.
+[List Bullet] Use barber start location for the first leg and real road travel between stops.
+[List Bullet] Scheduling increment: 5 minutes.
+[List Bullet] Service occupancy = service duration + configured service buffer. Travel is separate and counted once.
+[List Bullet] Finalise Route should optimise the whole day and automatically create drive legs.
+[List Bullet] A finalised route that changes becomes Needs Update; do not silently alter an execution-ready day.
+[List Bullet] Every automation action should be auditable in Route Flow Activity.
+[Heading 2] D. Route tab / day execution
+[List Bullet] Show today’s finalised route in order: start location, appointment, drive, appointment, etc.
+[List Bullet] Show next stop, address, scheduled time, ETA and expected drive duration.
+[List Bullet] Actions: Navigate, Call, Message, Arrived, Start, Complete.
+[List Bullet] When a step is completed, update route progress and recalculate downstream ETAs.
+[List Bullet] Clearly show if the route is stale or needs re-optimisation.
+[List Bullet] Support an emergency/manual change without corrupting the rest of the route.
+[Heading 2] E. Live tracking & ETA
+[List Bullet] Barber can enable live location only during the working route/day; tracking should be explicit and privacy-aware.
+[List Bullet] Use current barber location + route data to estimate arrival at the next customer.
+[List Bullet] Customer should receive useful ETA/status updates without exposing unnecessary continuous location history.
+[List Bullet] Recommended customer states: Confirmed, Barber preparing, On the way, Arriving soon, Arrived, Completed.
+[List Bullet] If ETA drifts materially, automatically notify the next affected customer.
+[List Bullet] Live location should improve navigation/ETA, not become a permanent employee-surveillance feature.
+[List Bullet] Store only the location data needed for current operational use and audit, subject to appropriate retention rules.
+[Heading 2] F. Payments
+[List Bullet] Attach payment state directly to the booking.
+[List Bullet] Support configurable deposits for higher-risk bookings (for example new clients, after-hours, groups or poor cancellation history) rather than forcing deposits for everyone.
+[List Bullet] Support full payment, deposit + balance, refund and partial refund states.
+[List Bullet] Send payment link/request automatically when the booking rule requires it.
+[List Bullet] Mark payment received through webhook/server confirmation, not just a front-end success screen.
+[List Bullet] After service completion, collect outstanding balance or allow admin to mark an approved offline payment method.
+[List Bullet] Send receipt and update revenue/reporting.
+[List Bullet] Preferred implementation should reuse the business’s chosen payment provider (Square is already part of the current workflow) rather than inventing a separate ledger where possible.
+[Heading 2] G. Client CRM & regular-client reminders
+[List Bullet] Single client profile: contact details, addresses, visit history, notes, favourite flag, service history, spend and booking/cancellation history.
+[List Bullet] Track preferred/expected booking frequency: weekly, fortnightly, 3-weekly, monthly or custom follow-up.
+[List Bullet] Automatically identify clients due for a cut and send rebooking reminders.
+[List Bullet] Suggested cadence currently desired: regular reminder outreach early in the week, then a follow-up to non-responders later in the week.
+[List Bullet] Do not message clients who already booked, opted out or have an unresolved conversation requiring human attention.
+[List Bullet] Provide a clear Clients/Reminders view showing due, messaged, replied, booked and follow-up needed.
+[Heading 2] H. Booking protection & reliability
+[List Bullet] Protect against accidental duplicates and spam/malicious repeated bookings.
+[List Bullet] Rate-limit repeated submissions by sensible identifiers without blocking legitimate families/groups.
+[List Bullet] Active-booking limits can apply by customer/phone where appropriate.
+[List Bullet] Suspicious requests can become Needs Review instead of automatically entering the schedule.
+[List Bullet] Cancellation/no-show history can inform deposit requirements later.
+[List Bullet] Background jobs must be idempotent: retries must not create duplicate bookings, duplicate messages or duplicate payments.
+[Heading 2] I. Admin & operations
+[List Bullet] Booking Requests: Edit, Add to Calendar, Decline, with clear reasons and states.
+[List Bullet] Route Flow Activity: placements, reshuffles, fitted requests, unscheduled outcomes, route finalisation, retries, overrides.
+[List Bullet] Team Member profile: working hours, special hours, start location and permissions.
+[List Bullet] Booking Rules: minimum notice, booking horizon, group discounts, capacity and future deposit rules.
+[List Bullet] Service Coverage: editable service areas and coverage tiers.
+[List Bullet] Reports: bookings, clients serviced, revenue, average price, revenue/hour, drive time, idle time, new clients and route efficiency.
+[Heading 2] J. Security, data and failure handling
+[List Bullet] All authoritative scheduling, payment and status transitions happen server-side.
+[List Bullet] Role-based permissions for admin/staff/customer access.
+[List Bullet] Public booking endpoints should expose only minimum necessary data.
+[List Bullet] Every manual override should be explicit and audited.
+[List Bullet] No silent failure: failed automation becomes Processing, Unscheduled or Needs Review with a human-readable reason.
+[List Bullet] Use version/concurrency checks before applying route or calendar reshuffles.
+[List Bullet] Maintain production/test-data separation so QA does not pollute real analytics or reminders.
+[Heading 1] 5. Finalise Route workflow
+[Normal] This is the intended day-planning model. Appointments should not need to be manually connected one-by-one.
+[Normal] 1. Booking requests arrive
+[Normal] 2. Route Flow creates provisional layout
+[Normal] 3. Admin reviews/moves if needed
+[Normal] 4. Press Finalise Route
+[Normal] 5. Whole day is optimised and validated
+[Normal] 6. Drive legs generated automatically
+[Normal] 7. Route tab becomes execution-ready
+[Normal] 8. Any material change → Route Needs Update
+[Normal] 9. Re-optimise Route
+[Heading 1] 6. Messaging automation matrix
+=== TABLE START ===
+Trigger | Message | Required context | Human approval?
+Request submitted | We received your request | Name, service, requested day/window | No
+Provisional placement | Optional holding/update message | Provisional time/window | Usually no
+Confirmed | Appointment confirmed | Date, time/window, service, address/payment status | No
+Deposit required | Payment request/link | Amount, expiry, booking ID | No
+Reminder | Upcoming appointment reminder | Time, address, reschedule/cancel link or reply instruction | No
+On the way | Barber is on the way | Live ETA / next-stop status | No
+Running late | Updated ETA | Delay and revised ETA | No, within policy
+Customer change request | Acknowledge and collect change | Current booking + requested change | Escalate if protected/ambiguous
+Completed | Thank you / receipt | Payment + service completion | No
+Due for rebooking | Regular-client reminder | Last visit + expected frequency | No, unless conversation becomes complex
+=== TABLE END ===
+[Heading 1] 7. System integrations
+=== TABLE START ===
+System | Role | Requirement
+Base44 | Integration | Current application, data model, public booking, admin UI and much of the scheduling logic. Keep as the central product unless a specific backend workload needs to be moved.
+Mapbox | Integration | Geocoding/maps/travel time/route visualisation already used for location intelligence and Route Flow.
+Google Calendar | Integration | Optional external calendar mirror and/or busy-time input. Define one source of truth and prevent sync loops.
+Square / payment provider | Integration | Payments, deposits, receipts and webhooks. Reuse the existing payment ecosystem where practical.
+WhatsApp/SMS provider | Integration | Outbound automation and inbound AI-assisted conversations. Provider can be selected based on reliability, AU support, cost and API/webhook quality.
+Navigation / device maps | Integration | Open turn-by-turn navigation from the Route tab using the chosen map/navigation destination.
+Background job/queue layer | Integration | Reliable server-side processing for Route Flow, message delivery, retries, webhooks and scheduled reminder campaigns. Must survive the app/browser being closed.
+=== TABLE END ===
+[Heading 1] 8. Automation rules that cannot be broken
+[List Bullet] Customer availability is a hard constraint unless an authorised admin explicitly overrides it.
+[List Bullet] Locked and Confirmed appointments are protected from automatic movement.
+[List Bullet] Route Flow never invents an appointment time that has not passed the shared validator.
+[List Bullet] Service duration + configured buffer are counted once; travel is separate and counted once.
+[List Bullet] No booking is silently dropped to make another booking fit in the current MVP.
+[List Bullet] Background retries must be idempotent.
+[List Bullet] Payments are confirmed by provider/server event, not client-side assumption.
+[List Bullet] Finalised routes do not silently change. Material changes mark the route as Needs Update.
+[List Bullet] Every important automation has a visible status/reason in admin.
+[List Bullet] AI messaging can assist with conversation, but scheduling commitments must come from validated booking/calendar state.
+[Heading 1] 9. What Atul should focus on
+[Normal] We do not need Atul to rebuild the whole app. The best use of his time is helping make the automation layer robust and production-ready around the Base44 product that already exists.
+[Normal] Priority 1 — Messaging engine: Design reliable inbound/outbound WhatsApp/SMS automation, AI-assisted replies, escalation, message state and background delivery.
+[Normal] Priority 2 — Production-grade background workflows: Queue/retry/idempotency for Route Flow, messages, reminders, webhooks and live ETA events.
+[Normal] Priority 3 — Calendar/integration architecture: Help decide source of truth and sync strategy between Base44 calendar and Google Calendar / external systems.
+[Normal] Priority 4 — Payments: Provider integration, webhooks, deposits, balances, refunds, receipts and booking-linked payment states.
+[Normal] Priority 5 — Live tracking / ETA: Build safe live-position/route-progress events and customer ETA notifications.
+[Normal] Priority 6 — Hardening Route Flow: Review optimiser architecture, performance, concurrency, failure recovery and whether parts should remain in Base44 or move to a dedicated service.
+[Heading 1] 10. MVP acceptance criteria
+[List Bullet] A customer can go from public request to confirmed booking without manual data re-entry.
+[List Bullet] A busy day of provisional requests can be auto-arranged without overlaps or impossible travel.
+[List Bullet] Admin can Finalise Route and see an execution-ready route with drive legs.
+[List Bullet] Barber can run the day from Route tab with Navigate / Arrived / Start / Complete actions.
+[List Bullet] Customer receives confirmation, reminder and ETA/on-the-way messages automatically.
+[List Bullet] Inbound routine booking questions can be answered automatically from live booking/calendar context.
+[List Bullet] Payments/deposits are linked to bookings and update from provider webhooks.
+[List Bullet] If the route changes, downstream ETAs and messages update safely.
+[List Bullet] Regular-client reminders can run without messaging people who already booked or opted out.
+[List Bullet] Route Flow Activity and message/payment logs make every important automation understandable.
+[List Bullet] App can be closed and background workflows still execute.
+[List Bullet] No duplicate booking/payment/message is created by retries or concurrency.
+[Heading 1] 11. What is deliberately NOT required for the first functional release
+[List Bullet] Multi-barber route optimisation across several vans at once.
+[List Bullet] Complex favourite/revenue/value weighting inside Route Flow.
+[List Bullet] Automatic displacement of already-scheduled provisional clients purely for commercial gain.
+[List Bullet] Full franchise/territory management.
+[List Bullet] Advanced predictive demand modelling.
+[List Bullet] Permanent real-time location history.
+[List Bullet] A custom payment ledger if Square/provider data can remain authoritative.
+[List Bullet] AI making unrestricted scheduling decisions outside the shared validator.
+[Heading 1] 12. Recommended delivery order
+=== TABLE START ===
+# | Phase | Outcome
+1 | Finish the scheduling core | Finalise Route, Route tab execution and Route Flow Activity visibility.
+2 | Automated messaging | Transactional messages first; then AI inbound handling and regular-client reminders.
+3 | Payments | Deposits/payment states/webhooks/receipts linked to bookings.
+4 | Live tracking & ETA | On-the-way status, live ETA, delay updates and route-progress events.
+5 | Calendar integrations | Google Calendar sync/busy blocks only after source-of-truth rules are agreed.
+6 | Hardening | Retries, rate limits, monitoring, failure recovery, audit, performance and production QA.
+=== TABLE END ===
+[Heading 1] 13. One-sentence product brief for Atul
+[Normal] “Build the automation layer that lets a mobile barber receive bookings, organise the day, communicate with customers, take payment and execute a live route with minimal manual admin.”
+[Small Muted] This document describes the target operating behaviour. Exact third-party providers can be finalised with Atul based on reliability, cost, Australian support and the current Base44 architecture.
