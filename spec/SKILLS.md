@@ -50,3 +50,39 @@ applied manually. The outputs are identical to the skill-driven workflow.
 - When auditing or extending this folder, apply the rea discipline: cite
   `file:line` for every claim, label inferences, and list anything you cannot
   verify as unknown rather than guessing.
+
+## Standing rules for every Base44 agent prompt
+
+Include these rules in every prompt given to the Base44-building agent:
+
+1. Do not modify anything in `base44/shared/` — `schedulingValidator.ts`,
+   `reshuffleEngine.ts`, `routeFlowOptimiser.ts`, `routeFlowEngine.ts`,
+   `dayRoute.ts`, `appointmentTiming.ts`. The scheduling core works; new
+   work sits beside it, never inside it.
+2. Do not change any existing entity's existing fields. Add new fields and
+   new entities only.
+3. Until the real provider lands, no message is actually sent — the sender
+   is a test double that logs.
+4. Every new backend function must be admin-gated using the existing
+   `requireAdminActor` from `base44/shared/schedulingAuth.ts`, except where
+   the ticket says otherwise. (The platform's workflow runner invokes
+   functions with a service identity that resolves to admin —
+   `schedulingAuth.ts:15-21` — so Workflows can call gated functions,
+   exactly as `routeFlowAutoPlaceV2` is called today.)
+5. Test data is never sent to. Anything flagged `is_test` is marked
+   `suppressed`, never delivered.
+6. Verify every acceptance check against the live app with test records,
+   then delete the test records.
+
+**Platform constraints discovered on Day 1 (Base44):**
+- Entities have **no database-level unique constraint** — idempotency must
+  be enforced application-side (oldest-row-wins cleanup at enqueue time;
+  same-key collapse at sweep claim time, per ticket 02).
+- Entity write permissions can require the **service role**, which no
+  signed-in user holds and which bypasses row-level security — so only
+  server code (backend functions, workflows) can write; admins and users
+  read only.
+- `enqueueMessage` requires every message to link to a `booking_request_id`
+  or `client_id` — an unverified link is refused (422) rather than assumed
+  production data, because `is_test` can only be determined through the
+  linked record.
